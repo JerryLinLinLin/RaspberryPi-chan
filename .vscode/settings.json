@@ -1,0 +1,6 @@
+{
+    "python.analysis.extraPaths": [
+        "./src/RaspberryPi-chan",
+        "./src/RaspberryPi-chan"
+    ]
+}

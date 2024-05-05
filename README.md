@@ -2,4 +2,4 @@
 Local Voice Assistant Running on Raspberry Pi
 
 ## References
-https://github.com/vndee/local-talking-llm
+Adapt from: https://github.com/vndee/local-talking-llm
