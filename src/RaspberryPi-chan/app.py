@@ -33,7 +33,7 @@ stt = whisper.load_model(config.WHISPER_MODEL)
 tts = TextToSpeechService()
 recognizer = sr.Recognizer()
 
-sd.default.device = config.SOUNDDRIVE_SPEAKER_DEVICE_ID
+
 
 engine = pyttsx3.init()
 engine.setProperty('rate', 150)
@@ -76,6 +76,7 @@ def record_audio(stop_event, data_queue):
         # text = recognizer.recognize_google(np.frombuffer(indata, dtype=np.int16), language="en-US")
         # print("You said: ", text)
 
+    sd.default.device = config.SOUNDDRIVE_MIC_DEVICE_ID
     with sd.RawInputStream(
         samplerate=16000, dtype="int16", channels=1, callback=callback
     ):
@@ -140,6 +141,7 @@ def play_audio(sample_rate, audio_array):
     Returns:
         None
     """
+    sd.default.device = config.SOUNDDRIVE_SPEAKER_DEVICE_ID
     sd.play(audio_array, sample_rate)
     sd.wait()
 
