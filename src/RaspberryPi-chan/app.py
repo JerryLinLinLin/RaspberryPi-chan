@@ -15,6 +15,7 @@ import config
 import os
 import sys
 import util
+import speech_recognition as sr
 
 console = Console()
 
@@ -29,6 +30,7 @@ if config.DISABLE_STDOUT:
 
 stt = whisper.load_model(config.WHISPER_MODEL)
 tts = TextToSpeechService()
+recognizer = sr.Recognizer()
 
 try:
     nltk.data.find('tokenizers/punkt')
