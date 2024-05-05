@@ -16,6 +16,7 @@ import os
 import sys
 import util
 import speech_recognition as sr
+import pyttsx3
 
 console = Console()
 
@@ -31,6 +32,12 @@ if config.DISABLE_STDOUT:
 stt = whisper.load_model(config.WHISPER_MODEL)
 tts = TextToSpeechService()
 recognizer = sr.Recognizer()
+
+engine = pyttsx3.init()
+engine.setProperty('rate', 150)
+engine.setProperty('volume', 0.9)
+voices = engine.getProperty('voices')
+engine.setProperty("voice", 'zh')
 
 try:
     nltk.data.find('tokenizers/punkt')
@@ -64,12 +71,29 @@ def record_audio(stop_event, data_queue):
         if status:
             console.print(status)
         data_queue.put(bytes(indata))
+        # text = recognizer.recognize_google(np.frombuffer(indata, dtype=np.int16), language="en-US")
+        # print("You said: ", text)
 
     with sd.RawInputStream(
         samplerate=16000, dtype="int16", channels=1, callback=callback
     ):
+        start_time = time.time()
         while not stop_event.is_set():
+            # if data_queue.qsize() > 5:
+            #     audio_data = b"".join(list(data_queue.queue))
+            #     audio_data = np.frombuffer(audio_data, dtype=np.int16)
+            #     # audio_np = (
+            #     #     np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768.0
+            #     # )
+            #     text = recognizer.recognize_google(audio_data, language="en-US")
+            #     print("You said: ", text)
             time.sleep(0.1)
+            current_time = time.time()
+            elapsed_time = current_time - start_time
+            if elapsed_time > 60:
+                data_queue.queue.clear()
+
+
 
 
 def transcribe(audio_np: np.ndarray) -> str:
@@ -135,7 +159,26 @@ if __name__ == "__main__":
             )
             recording_thread.start()
 
-            input()
+            # voice activation
+            while True:
+                audio_data = b"".join(list(data_queue.queue))
+                audio_np = (
+                    np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768.0
+                )
+                if audio_np.size > 0:
+                    text = transcribe(audio_np)
+                    if "Hello" in str(text):
+                        console.print("Detected: Voice Activated")
+                        engine.say(config.VOICE_BEGIN_TEXT)
+                        engine.runAndWait()
+                        data_queue.queue.clear()
+                        break
+                time.sleep(1)
+            
+            console.print("Listening:...")
+            time.sleep(10)
+
+
             stop_event.set()
             recording_thread.join()
 
@@ -147,7 +190,9 @@ if __name__ == "__main__":
             if audio_np.size > 0:
                 with console.status("Transcribing...", spinner="earth"):
                     text = transcribe(audio_np)
+                    # text2 = recognizer.recognize_google(audio_np, language="en-US")
                 console.print(f"[yellow]You: {text}")
+                # console.print(f"[yellow]You: {text2}")
 
                 with console.status("Generating response...", spinner="earth"):
                     response = util.limit_words(get_llm_response(text))
