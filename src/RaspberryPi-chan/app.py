@@ -33,7 +33,7 @@ stt = whisper.load_model(config.WHISPER_MODEL)
 tts = TextToSpeechService()
 recognizer = sr.Recognizer()
 
-sd.default.device = config.SOUNDDRIVE_DEVICE_ID
+sd.default.device = config.SOUNDDRIVE_SPEAKER_DEVICE_ID
 
 engine = pyttsx3.init()
 engine.setProperty('rate', 150)
