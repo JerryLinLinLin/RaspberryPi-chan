@@ -1,5 +1,5 @@
 # Model related
-OLLAMA_MODEL = "qwen:7b" # "phi:latest"
+OLLAMA_MODEL = "qwen:4b" # "phi:latest"
 WHISPER_MODEL = "base" #"base.en"
 BARK_MODEL = "suno/bark-small"
 BARK_VOICE_PRESET = "v2/en_speaker_1"
