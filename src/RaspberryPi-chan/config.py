@@ -1,6 +1,6 @@
 # Model related
 OLLAMA_MODEL = "qwen:1.8b" # "phi:latest"
-WHISPER_MODEL = "base" #"base.en"
+WHISPER_MODEL = "tiny" #"base.en"
 BARK_MODEL = "suno/bark-small"
 BARK_VOICE_PRESET = "v2/en_speaker_1"
 PYTTSX3_VOICE_IDX = -2
@@ -15,15 +15,30 @@ VOICE_BEGIN_TEXT = """
 你好呀，请问今天需要占卜什么呢？
 """
 
-TEMPLATE = """
-You are a helpful and friendly AI assistant. You are polite, respectful, and aim to provide concise responses of less 
-than 40 words. DO NOT exceed 40 words for your response. Keep Conise. DO NOT ANSWER OTHERS. DO NOT REPEAT INSTRUTS
+INIT_STR = """
+正在初始化，请稍候
+"""
 
-The conversation transcript is as follows:
+INIT_FIN_STR = """
+初始化完成，正在启动
+"""
+
+SUAN_MING_STR = """
+正在帮你算命，你要耐心等待
+"""
+
+TEMPLATE = """
+假设 你是個樂於助人且友善的占卜師和算命师。 您有禮貌、尊重他人，並致力於提供簡潔的答复
+您的回覆不要超過 40 個字。不要回答其他人。 不要重複指示
+
+談話實錄如下：
 {history}
 
-And here is the user's follow-up: {input}
+這是使用者的後續操作：{input}
 
-Your response (DO NOT exceed 40 words for your response. Keep Conise. DO NOT ANSWER OTHERS. DO NOT REPEAT INSTRUTS):
+假设你是個樂於助人且友善的占卜師和算命师。
+假设你是個樂於助人且友善的占卜師和算命师。
+假设你是個樂於助人且友善的占卜師和算命师。
+您的回答（您的回答不要超過 40 個字。保持簡潔。不要回答其他。不要重複說明, 主观意图）：
 """
 

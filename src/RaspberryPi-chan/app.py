@@ -17,6 +17,7 @@ import sys
 import util
 import speech_recognition as sr
 import pyttsx3
+import scipy.signal
 
 console = Console()
 
@@ -28,18 +29,19 @@ if config.DISABLE_STDOUT:
     sys.stdout = null_fd
     sys.stderr = null_fd
 
+engine = pyttsx3.init()
+engine.setProperty('rate', 120)
+engine.setProperty('volume', 1)
+voices = engine.getProperty('voices')
+engine.setProperty("voice", 'zh')
+
+engine.say(config.INIT_STR)
+engine.runAndWait()
 
 stt = whisper.load_model(config.WHISPER_MODEL)
 tts = TextToSpeechService()
 recognizer = sr.Recognizer()
 
-
-
-engine = pyttsx3.init()
-engine.setProperty('rate', 150)
-engine.setProperty('volume', 0.9)
-voices = engine.getProperty('voices')
-engine.setProperty("voice", 'zh')
 
 try:
     nltk.data.find('tokenizers/punkt')
@@ -72,13 +74,23 @@ def record_audio(stop_event, data_queue):
     def callback(indata, frames, time, status):
         if status:
             console.print(status)
+        # Extracting the audio data from the input buffer
+        # console.print(indata)
+        # audio_data = indata[:,0] # Assuming 'indata' is a 2D numpy array with shape (frames, channels)
+        
+        # # Calculate the new length after downsampling
+        # new_length = int(len(audio_data) * 16000 / 44100)
+        
+        # # Resample from 44100 Hz to 16000 Hz
+        # downsampled_data = scipy.signal.resample(audio_data, new_length)
+
         data_queue.put(bytes(indata))
         # text = recognizer.recognize_google(np.frombuffer(indata, dtype=np.int16), language="en-US")
         # print("You said: ", text)
 
-    sd.default.device = config.SOUNDDRIVE_MIC_DEVICE_ID
+    # sd.default.device = config.SOUNDDRIVE_MIC_DEVICE_ID
     with sd.RawInputStream(
-        samplerate=16000, dtype="int16", channels=1, callback=callback
+        samplerate=44100, dtype="int16", channels=1, callback=callback, device=config.SOUNDDRIVE_MIC_DEVICE_ID
     ):
         start_time = time.time()
         while not stop_event.is_set():
@@ -148,13 +160,15 @@ def play_audio(sample_rate, audio_array):
 
 if __name__ == "__main__":
     console.print("[cyan]Assistant started! Press Ctrl+C to exit.")
+    engine.say(config.INIT_FIN_STR)
+    engine.runAndWait()
 
     try:
         while True:
-            console.input(
-                "Press Enter to start recording, then press Enter again to stop."
-            )
-
+            # console.input(
+            #     "Press Enter to start recording, then press Enter again to stop."
+            # )
+            
             data_queue = Queue()  # type: ignore[var-annotated]
             stop_event = threading.Event()
             recording_thread = threading.Thread(
@@ -169,15 +183,27 @@ if __name__ == "__main__":
                 audio_np = (
                     np.frombuffer(audio_data, dtype=np.int16).astype(np.float32) / 32768.0
                 )
+                
                 if audio_np.size > 0:
+                    original_rate = 44100
+                    target_rate = 16000
+                    num_original_samples = len(audio_np)
+                    num_target_samples = int((num_original_samples * target_rate) / original_rate)
+
+                    # Perform resampling
+                    audio_np = scipy.signal.resample(audio_np, num_target_samples)
                     text = transcribe(audio_np)
-                    if "Hello" in str(text):
+                    console.print(text)
+                    if "同學" in str(text) or "同学" in str(text):
+                        console.print(text)
                         console.print("Detected: Voice Activated")
                         engine.say(config.VOICE_BEGIN_TEXT)
                         engine.runAndWait()
                         data_queue.queue.clear()
                         break
-                time.sleep(1)
+                    if (len(text)) > 10:
+                        data_queue.queue.clear()
+                time.sleep(3)
             
             console.print("Listening:...")
             time.sleep(10)
@@ -192,6 +218,16 @@ if __name__ == "__main__":
             )
 
             if audio_np.size > 0:
+
+                original_rate = 44100
+                target_rate = 16000
+                num_original_samples = len(audio_np)
+                num_target_samples = int((num_original_samples * target_rate) / original_rate)
+                audio_np = scipy.signal.resample(audio_np, num_target_samples)
+                
+                engine.say(config.SUAN_MING_STR)
+                engine.runAndWait()
+
                 with console.status("Transcribing...", spinner="earth"):
                     text = transcribe(audio_np)
                     # text2 = recognizer.recognize_google(audio_np, language="en-US")
@@ -203,9 +239,11 @@ if __name__ == "__main__":
                     console.print(f"[cyan]Assistant: {response}")
                 
                 with console.status("Generating voice...", spinner="dots"):
-                    sample_rate, audio_array = tts.long_form_synthesize(response)
+                    # sample_rate, audio_array = tts.long_form_synthesize(response)
+                    engine.say(response)
+                    engine.runAndWait()
 
-                play_audio(sample_rate, audio_array)
+                # play_audio(sample_rate, audio_array)
             else:
                 console.print(
                     "[red]No audio recorded. Please ensure your microphone is working."
